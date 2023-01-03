@@ -1,41 +1,49 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Form, Label, Input, Button } from './ContactForm.styled';
-import PropTypes from 'prop-types';
+import { addContact } from 'redux/contactsSlice';
+import { getContacts } from 'redux/selectors';
 
-function ContactForm({ onSubmit }) {
+export const ContactForm = () => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
 
-  function handleChange(event) {
-    const { name, value } = event.currentTarget;
-
-    switch (name) {
-      case 'name':
-        setName(value);
-        break;
-
-      case 'number':
-        setNumber(value);
-        break;
-
-      default:
-        return;
-    }
-  }
+  const contacts = useSelector(getContacts) 
+  const dispatch = useDispatch();
 
   const handleSubmit = event => {
     event.preventDefault();
 
-    if (name === onSubmit({name, number})) {
+    const form = event.target;
+    const name = form.elements.name.value;
+    const number = form.elements.number.value;
+
+    const newContact = contacts.find(contact => contact.name === name);
+    if (newContact) {
+      alert(`${name} is already in contacts`);
       return;
     }
-    reset();
+
+    dispatch(addContact(name, number));
+    setName('')
+    setNumber('')
+
+    form.reset();
   };
 
-  function reset() {
-    setName('');
-    setNumber('');
-  }
+  const handleChange = event => {
+    const { name, value } = event.target;
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+      case 'number':
+        setNumber(value);
+        break;
+      default:
+        return;
+    }
+  };
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -57,8 +65,8 @@ function ContactForm({ onSubmit }) {
         <Input
           type="tel"
           name="number"
-          value={number}
           onChange={handleChange}
+          value={number}
           pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
           title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
           required
@@ -68,10 +76,4 @@ function ContactForm({ onSubmit }) {
       <Button type="submit">Add contact</Button>
     </Form>
   );
-}
-
-export default ContactForm;
-
-ContactForm.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
 };
